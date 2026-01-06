@@ -23,11 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
-# Generated indices
+# Generated indices (uncompressed - too large for git)
 public/data/*.json
 !public/data/version.json
-!public/data/hvsc-index.json
-!public/data/cgsc-index.json
+# Compressed indices are tracked
+!public/data/*.json.gz
 
 # Music collections (too large for git)
 HVSC/
