@@ -26,6 +26,8 @@ dist-ssr
 # Generated indices
 public/data/*.json
 !public/data/version.json
+!public/data/hvsc-index.json
+!public/data/cgsc-index.json
 
 # Music collections (too large for git)
 HVSC/
