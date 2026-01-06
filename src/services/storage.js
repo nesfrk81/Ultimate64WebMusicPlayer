@@ -342,3 +342,74 @@ export const clearPlayHistory = async () => {
     request.onerror = () => reject(request.error)
   })
 }
+
+// Export all data (settings, playlists, favourites)
+export const exportAllData = async () => {
+  const settings = await getSettings()
+  const playlists = await getAllPlaylists()
+  const favourites = await getAllFavourites()
+  
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    settings: settings || {},
+    playlists: playlists || [],
+    favourites: favourites || []
+  }
+}
+
+// Import all data (settings, playlists, favourites)
+export const importAllData = async (data) => {
+  if (!data || typeof data !== 'object') {
+    throw new Error('Invalid import data')
+  }
+  
+  const database = await initDB()
+  
+  // Import settings
+  if (data.settings && typeof data.settings === 'object') {
+    await saveSettings(data.settings)
+  }
+  
+  // Import playlists
+  if (data.playlists && Array.isArray(data.playlists)) {
+    // Clear existing playlists first
+    await new Promise((resolve, reject) => {
+      const transaction = database.transaction(['playlists'], 'readwrite')
+      const store = transaction.objectStore('playlists')
+      const request = store.clear()
+      request.onsuccess = () => resolve()
+      request.onerror = () => reject(request.error)
+    })
+    
+    // Add imported playlists
+    for (const playlist of data.playlists) {
+      await new Promise((resolve, reject) => {
+        const transaction = database.transaction(['playlists'], 'readwrite')
+        const store = transaction.objectStore('playlists')
+        const request = store.put(playlist)
+        request.onsuccess = () => resolve()
+        request.onerror = () => reject(request.error)
+      })
+    }
+  }
+  
+  // Import favourites
+  if (data.favourites && Array.isArray(data.favourites)) {
+    // Clear existing favourites first
+    await new Promise((resolve, reject) => {
+      const transaction = database.transaction(['favourites'], 'readwrite')
+      const store = transaction.objectStore('favourites')
+      const request = store.clear()
+      request.onsuccess = () => resolve()
+      request.onerror = () => reject(request.error)
+    })
+    
+    // Add imported favourites
+    for (const fav of data.favourites) {
+      await addFavourite(fav.songId || fav)
+    }
+  }
+  
+  return true
+}

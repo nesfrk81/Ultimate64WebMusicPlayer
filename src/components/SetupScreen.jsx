@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSettings } from '../hooks/useSettings'
 import { checkSonglengthsAvailable } from '../services/api'
+import { exportAllData, importAllData } from '../services/storage'
 import './SetupScreen.css'
 
 function SetupScreen({ onComplete }) {
@@ -22,7 +23,9 @@ function SetupScreen({ onComplete }) {
   const [checkingSonglengths, setCheckingSonglengths] = useState(false)
   const [songlengthWarning, setSonglengthWarning] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [showExpImpDropdown, setShowExpImpDropdown] = useState(false)
   const originalDataRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   // Update formData when settings are loaded
   useEffect(() => {
@@ -124,6 +127,50 @@ function SetupScreen({ onComplete }) {
     setShowConfirmDialog(false)
   }
 
+  const handleExport = async () => {
+    setShowExpImpDropdown(false)
+    try {
+      const data = await exportAllData()
+      const json = JSON.stringify(data, null, 2)
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `uc64-musicplayer-backup-${new Date().toISOString().split('T')[0]}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Export failed:', error)
+      alert('Export failed: ' + error.message)
+    }
+  }
+
+  const handleImportClick = () => {
+    setShowExpImpDropdown(false)
+    fileInputRef.current?.click()
+  }
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      await importAllData(data)
+      alert('Import successful! Settings and playlists have been restored.')
+      window.location.reload()
+    } catch (error) {
+      console.error('Import failed:', error)
+      alert('Import failed: ' + error.message)
+    }
+    
+    // Reset file input
+    e.target.value = ''
+  }
+
   if (isLoading) {
     return (
       <div className="setup-screen">
@@ -137,7 +184,31 @@ function SetupScreen({ onComplete }) {
   return (
     <div className="setup-screen">
       <div className="setup-content">
-        <h2>Setup</h2>
+        <div className="setup-header">
+          <h2>Setup</h2>
+          <div className="exp-imp-container">
+            <button
+              type="button"
+              className="exp-imp-button"
+              onClick={() => setShowExpImpDropdown(!showExpImpDropdown)}
+            >
+              Exp/Imp
+            </button>
+            {showExpImpDropdown && (
+              <div className="exp-imp-dropdown">
+                <button type="button" onClick={handleExport}>Export</button>
+                <button type="button" onClick={handleImportClick}>Import</button>
+              </div>
+            )}
+          </div>
+        </div>
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept=".json"
+          style={{ display: 'none' }}
+          onChange={handleImportFile}
+        />
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="ip">Ultimate64 IP Address</label>

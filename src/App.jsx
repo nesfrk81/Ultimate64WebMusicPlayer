@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Header from './components/Header'
 import BottomBar from './components/BottomBar'
 import SetupScreen from './components/SetupScreen'
@@ -18,6 +18,7 @@ function App() {
   const [selectedPlaylist, setSelectedPlaylist] = useState(null)
   const [previousScreen, setPreviousScreen] = useState(null)
   const [showAboutDialog, setShowAboutDialog] = useState(false)
+  const initialScreenSetRef = useRef(false)
 
   // Load song indices on app start
   useEffect(() => {
@@ -48,14 +49,37 @@ function App() {
 
   useEffect(() => {
     if (isLoading) return
+    if (initialScreenSetRef.current) return
     
     // Check if setup is needed
     if (!settings.ip || !settings.hvscPath) {
       setCurrentScreen('setup')
+      initialScreenSetRef.current = true
     } else {
-      setCurrentScreen('playlist-list')
+      // Check for active session in localStorage (for mobile background recovery)
+      const hasActiveSession = (() => {
+        try {
+          const session = localStorage.getItem('uc64_player_session')
+          if (session) {
+            const data = JSON.parse(session)
+            // Only consider valid if song hasn't ended yet
+            return data.songEndTime && Date.now() < data.songEndTime
+          }
+        } catch (e) {
+          // Ignore
+        }
+        return false
+      })()
+      
+      if (hasActiveSession || player.isPlaying) {
+        // If there's an active/restored session, go to now playing
+        setCurrentScreen('now-playing')
+      } else {
+        setCurrentScreen('playlist-list')
+      }
+      initialScreenSetRef.current = true
     }
-  }, [settings, isLoading])
+  }, [settings, isLoading, player.isPlaying])
 
   const handleHomeClick = () => {
     setCurrentScreen('playlist-list')

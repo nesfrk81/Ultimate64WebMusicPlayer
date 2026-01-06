@@ -23,10 +23,70 @@
   }
 }
 
+.setup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
 .setup-content h2 {
   color: var(--text-primary);
-  margin-bottom: 2rem;
   font-size: 1.5rem;
+  margin: 0;
+}
+
+.exp-imp-container {
+  position: relative;
+}
+
+.exp-imp-button {
+  padding: 0.5rem 1rem;
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.exp-imp-button:hover {
+  background-color: var(--border-color);
+}
+
+.exp-imp-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.25rem;
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  z-index: 100;
+  min-width: 100px;
+}
+
+.exp-imp-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.exp-imp-dropdown button:last-child {
+  border-bottom: none;
+}
+
+.exp-imp-dropdown button:hover {
+  background-color: var(--border-color);
 }
 
 .form-group {

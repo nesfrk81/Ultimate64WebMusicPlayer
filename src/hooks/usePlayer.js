@@ -2,6 +2,36 @@ import { useState, useEffect, useRef } from 'react'
 import { playSid, playMus, stopPlayback } from '../services/api'
 import { getSettings, getSonglength, getSongTime, recordPlay } from '../services/storage'
 
+const SESSION_KEY = 'uc64_player_session'
+
+// Save session to localStorage
+const saveSession = (data) => {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(data))
+  } catch (e) {
+    // Ignore storage errors
+  }
+}
+
+// Load session from localStorage
+const loadSession = () => {
+  try {
+    const data = localStorage.getItem(SESSION_KEY)
+    return data ? JSON.parse(data) : null
+  } catch (e) {
+    return null
+  }
+}
+
+// Clear session from localStorage
+const clearSession = () => {
+  try {
+    localStorage.removeItem(SESSION_KEY)
+  } catch (e) {
+    // Ignore storage errors
+  }
+}
+
 export function usePlayer() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentSong, setCurrentSong] = useState(null)
@@ -19,7 +49,71 @@ export function usePlayer() {
   const playIndexRef = useRef(0)
   const playedSongsRef = useRef(new Set())
   const shuffledOrderRef = useRef(null)
+  const songEndTimeRef = useRef(null)
+  const handleNextRef = useRef(null)
+  const restoringRef = useRef(false)
 
+  // Keep handleNextRef updated so visibility handler can call it
+  useEffect(() => {
+    handleNextRef.current = handleNext
+  })
+
+  // Restore session on mount
+  useEffect(() => {
+    const session = loadSession()
+    if (session && session.songEndTime && Date.now() < session.songEndTime) {
+      // Session is still valid, restore it
+      restoringRef.current = true
+      stoppedRef.current = false
+      
+      setIsPlaying(true)
+      setCurrentSong(session.currentSong)
+      setCurrentPlaylist(session.playlist)
+      setPlayOptions(session.options)
+      setPlayIndex(session.playIndex)
+      
+      currentPlaylistRef.current = session.playlist
+      playOptionsRef.current = session.options
+      playIndexRef.current = session.playIndex
+      shuffledOrderRef.current = session.shuffledOrder
+      songEndTimeRef.current = session.songEndTime
+      
+      if (session.playedSongs) {
+        const played = new Set(session.playedSongs)
+        setPlayedSongs(played)
+        playedSongsRef.current = played
+      }
+      
+      // Calculate remaining time and set up timer
+      const remaining = Math.round((session.songEndTime - Date.now()) / 1000)
+      setRemainingTime(Math.max(0, remaining))
+      
+      // Set up interval for countdown
+      intervalRef.current = setInterval(() => {
+        if (songEndTimeRef.current) {
+          const rem = Math.round((songEndTimeRef.current - Date.now()) / 1000)
+          setRemainingTime(Math.max(0, rem))
+        }
+      }, 1000)
+      
+      // Set up timeout for next song
+      const timeLeft = session.songEndTime - Date.now()
+      if (timeLeft > 0) {
+        timeoutRef.current = setTimeout(() => {
+          if (handleNextRef.current) {
+            handleNextRef.current()
+          }
+        }, timeLeft)
+      }
+      
+      restoringRef.current = false
+    } else if (session) {
+      // Session expired, clear it
+      clearSession()
+    }
+  }, [])
+
+  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
@@ -29,6 +123,45 @@ export function usePlayer() {
         clearInterval(intervalRef.current)
       }
     }
+  }, [])
+
+  // Handle visibility change (for when phone is locked/unlocked)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !stoppedRef.current) {
+        // Try to restore from session if refs are empty (page was reloaded)
+        if (!songEndTimeRef.current) {
+          const session = loadSession()
+          if (session && session.songEndTime) {
+            songEndTimeRef.current = session.songEndTime
+            currentPlaylistRef.current = session.playlist
+            playOptionsRef.current = session.options
+            playIndexRef.current = session.playIndex
+            shuffledOrderRef.current = session.shuffledOrder
+            if (session.playedSongs) {
+              playedSongsRef.current = new Set(session.playedSongs)
+            }
+          }
+        }
+        
+        if (songEndTimeRef.current) {
+          const now = Date.now()
+          if (now >= songEndTimeRef.current) {
+            // Song should have ended while we were in background
+            if (handleNextRef.current) {
+              handleNextRef.current()
+            }
+          } else {
+            // Update remaining time display
+            const remaining = Math.round((songEndTimeRef.current - now) / 1000)
+            setRemainingTime(Math.max(0, remaining))
+          }
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   const parseDuration = (durationStr) => {
@@ -99,21 +232,31 @@ export function usePlayer() {
       }
 
       const duration = await getSongDuration(song, options)
+      const durationMs = duration * 1000
+      songEndTimeRef.current = Date.now() + durationMs
       setRemainingTime(Math.round(duration))
 
+      // Save session to localStorage for mobile background recovery
+      saveSession({
+        currentSong: song,
+        playlist: playlist,
+        options: options,
+        playIndex: playIndexRef.current,
+        shuffledOrder: shuffledOrderRef.current,
+        playedSongs: Array.from(playedSongsRef.current),
+        songEndTime: songEndTimeRef.current
+      })
+
       intervalRef.current = setInterval(() => {
-        setRemainingTime(prev => {
-          if (prev <= 1) {
-            clearInterval(intervalRef.current)
-            return 0
-          }
-          return prev - 1
-        })
+        if (songEndTimeRef.current) {
+          const remaining = Math.round((songEndTimeRef.current - Date.now()) / 1000)
+          setRemainingTime(Math.max(0, remaining))
+        }
       }, 1000)
 
       timeoutRef.current = setTimeout(() => {
         handleNext()
-      }, duration * 1000)
+      }, durationMs)
     } catch (error) {
       console.error('Failed to play song:', error)
       alert(`Failed to play song: ${error.message}`)
@@ -125,6 +268,8 @@ export function usePlayer() {
 
   const stop = async () => {
     stoppedRef.current = true
+    songEndTimeRef.current = null
+    clearSession()
     
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
@@ -309,6 +454,7 @@ export function usePlayer() {
   return {
     isPlaying,
     currentSong,
+    currentPlaylist,
     remainingTime,
     playOptions,
     currentIndex: playIndex,
