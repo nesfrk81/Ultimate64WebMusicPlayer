@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { playSid, playMus, stopPlayback } from '../services/api'
-import { getSettings, getSonglength, getSongTime, recordPlay } from '../services/storage'
+import { getSettings, getSonglength, getSongTime, recordPlay, getSongPrefs } from '../services/storage'
 
 const SESSION_KEY = 'uc64_player_session'
 
@@ -40,6 +40,7 @@ export function usePlayer() {
   const [playIndex, setPlayIndex] = useState(0)
   const [remainingTime, setRemainingTime] = useState(0)
   const [playedSongs, setPlayedSongs] = useState(new Set())
+  const [currentSubsong, setCurrentSubsong] = useState(1)
   const timeoutRef = useRef(null)
   const intervalRef = useRef(null)
   const stoppedRef = useRef(false)
@@ -52,6 +53,8 @@ export function usePlayer() {
   const songEndTimeRef = useRef(null)
   const handleNextRef = useRef(null)
   const restoringRef = useRef(false)
+  const currentSubsongRef = useRef(1)
+  const currentSongRef = useRef(null)
 
   // Keep handleNextRef updated so visibility handler can call it
   useEffect(() => {
@@ -71,12 +74,15 @@ export function usePlayer() {
       setCurrentPlaylist(session.playlist)
       setPlayOptions(session.options)
       setPlayIndex(session.playIndex)
+      setCurrentSubsong(session.currentSubsong || 1)
       
       currentPlaylistRef.current = session.playlist
       playOptionsRef.current = session.options
       playIndexRef.current = session.playIndex
       shuffledOrderRef.current = session.shuffledOrder
       songEndTimeRef.current = session.songEndTime
+      currentSubsongRef.current = session.currentSubsong || 1
+      currentSongRef.current = session.currentSong
       
       if (session.playedSongs) {
         const played = new Set(session.playedSongs)
@@ -174,7 +180,7 @@ export function usePlayer() {
     return (minutes * 60) + seconds + milliseconds
   }
 
-  const getSongDuration = async (song, options) => {
+  const getSongDuration = async (song, options, subsong = 1) => {
     const settings = await getSettings()
     
     const customTime = await getSongTime(song.songId || song.id)
@@ -182,15 +188,18 @@ export function usePlayer() {
       return customTime
     }
 
+    // Get duration for specific subsong (0-indexed in array)
+    const subsongIndex = Math.max(0, subsong - 1)
+
     if (song.type === 'sid' && options?.useSidSonglength) {
-      if (song.songlengths && song.songlengths.length > 0) {
-        return parseDuration(song.songlengths[0])
+      if (song.songlengths && song.songlengths.length > subsongIndex) {
+        return parseDuration(song.songlengths[subsongIndex])
       }
       
       if (song.md5) {
         const durations = await getSonglength(song.md5)
-        if (durations && durations.length > 0) {
-          return parseDuration(durations[0])
+        if (durations && durations.length > subsongIndex) {
+          return parseDuration(durations[subsongIndex])
         }
       }
     }
@@ -204,20 +213,57 @@ export function usePlayer() {
     return 60
   }
 
-  const playSong = async (song, playlist, options) => {
+  const playSong = async (song, playlist, options, subsong = null) => {
     try {
+      // Determine which subsong to play
+      const prefs = getSongPrefs(song.songId || song.id)
+      const maxSubsongs = song.subsongs || (song.songlengths?.length) || 1
+      
+      // Get the SID's built-in default start song (from index, parsed from SID header)
+      const sidDefaultSubsong = song.startSong || 1
+      
+      // Check if user has explicitly set a default subsong preference
+      // Ignore preferences where defaultSubsong is 1 - these were likely set before proper subsong support
+      // and don't represent an intentional user choice
+      const hasUserPreference = prefs?.defaultSubsong && 
+                                prefs.defaultSubsong !== 1 && 
+                                prefs.defaultSubsong !== sidDefaultSubsong
+      
+      // Determine subsong number to pass to API
+      // - If subsong is explicitly passed (navigation), use it
+      // - If user has a saved preference, use it
+      // - Otherwise, use the SID's default startSong from our index
+      // Note: We ALWAYS pass the subsong number since Ultimate64 doesn't reliably
+      // read the SID's internal startSong field from the file header
+      let subsongForApi = sidDefaultSubsong
+      let subsongForDisplay = sidDefaultSubsong
+      
+      if (subsong !== null) {
+        // Explicitly navigating to a specific subsong
+        subsongForApi = Math.max(1, Math.min(subsong, maxSubsongs))
+        subsongForDisplay = subsongForApi
+      } else if (hasUserPreference) {
+        // User has saved a preference
+        subsongForApi = Math.max(1, Math.min(prefs.defaultSubsong, maxSubsongs))
+        subsongForDisplay = subsongForApi
+      }
+      // else: Use the SID's default from our index (already set above)
+      
       setIsPlaying(true)
       setCurrentSong(song)
       setCurrentPlaylist(playlist)
       setPlayOptions(options)
+      setCurrentSubsong(subsongForDisplay)
       
       currentPlaylistRef.current = playlist
       playOptionsRef.current = options
+      currentSubsongRef.current = subsongForDisplay
+      currentSongRef.current = song
 
       await recordPlay(song.songId || song.id)
 
       if (song.type === 'sid') {
-        await playSid(song.path, song.collection || 'hvsc')
+        await playSid(song.path, song.collection || 'hvsc', subsongForApi)
       } else if (song.type === 'mus') {
         await playMus(song.path, song.collection || 'cgsc')
       }
@@ -231,7 +277,7 @@ export function usePlayer() {
         intervalRef.current = null
       }
 
-      const duration = await getSongDuration(song, options)
+      const duration = await getSongDuration(song, options, subsongForDisplay)
       const durationMs = duration * 1000
       songEndTimeRef.current = Date.now() + durationMs
       setRemainingTime(Math.round(duration))
@@ -244,7 +290,8 @@ export function usePlayer() {
         playIndex: playIndexRef.current,
         shuffledOrder: shuffledOrderRef.current,
         playedSongs: Array.from(playedSongsRef.current),
-        songEndTime: songEndTimeRef.current
+        songEndTime: songEndTimeRef.current,
+        currentSubsong: subsongForDisplay
       })
 
       intervalRef.current = setInterval(() => {
@@ -287,7 +334,10 @@ export function usePlayer() {
     setPlayIndex(0)
     setRemainingTime(0)
     setPlayedSongs(new Set())
+    setCurrentSubsong(1)
     shuffledOrderRef.current = null
+    currentSubsongRef.current = 1
+    currentSongRef.current = null
     
     try {
       await stopPlayback()
@@ -362,6 +412,8 @@ export function usePlayer() {
     const options = playOptionsRef.current
     const currentIndex = playIndexRef.current
     const played = playedSongsRef.current
+    const song = currentSongRef.current
+    const subsong = currentSubsongRef.current
     
     if (!playlist || !options) return
 
@@ -371,6 +423,22 @@ export function usePlayer() {
       return
     }
 
+    // Check if we should auto-play next subsong
+    if (song) {
+      const maxSubsongs = song.subsongs || (song.songlengths?.length) || 1
+      const prefs = getSongPrefs(song.songId || song.id)
+      
+      if (prefs?.autoPlaySubsongs && subsong < maxSubsongs) {
+        // Play next subsong of current song
+        const nextSubsong = subsong + 1
+        setCurrentSubsong(nextSubsong)
+        currentSubsongRef.current = nextSubsong
+        await playSong(song, playlist, options, nextSubsong)
+        return
+      }
+    }
+
+    // Move to next song in playlist
     let nextIndex = currentIndex
 
     if (options.shuffle) {
@@ -414,7 +482,8 @@ export function usePlayer() {
 
     setPlayIndex(nextIndex)
     playIndexRef.current = nextIndex
-    await playSong(songs[nextIndex], playlist, options)
+    // Next song starts at its default subsong (null lets playSong determine it)
+    await playSong(songs[nextIndex], playlist, options, null)
   }
 
   const startPlaylist = async (playlistData) => {
@@ -451,6 +520,47 @@ export function usePlayer() {
     await playSong(songs[startIndex], playlistWithSongs, options)
   }
 
+  const nextSubsong = async () => {
+    const song = currentSongRef.current
+    if (!song) return
+    
+    const maxSubsongs = song.subsongs || (song.songlengths?.length) || 1
+    const subsong = currentSubsongRef.current
+    
+    if (subsong < maxSubsongs) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      
+      const nextSub = subsong + 1
+      await playSong(song, currentPlaylistRef.current, playOptionsRef.current, nextSub)
+    }
+  }
+
+  const previousSubsong = async () => {
+    const song = currentSongRef.current
+    if (!song) return
+    
+    const subsong = currentSubsongRef.current
+    
+    if (subsong > 1) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      
+      const prevSub = subsong - 1
+      await playSong(song, currentPlaylistRef.current, playOptionsRef.current, prevSub)
+    }
+  }
+
+  const playSubsong = async (subsongNumber) => {
+    const song = currentSongRef.current
+    if (!song) return
+    
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    
+    await playSong(song, currentPlaylistRef.current, playOptionsRef.current, subsongNumber)
+  }
+
   return {
     isPlaying,
     currentSong,
@@ -459,10 +569,15 @@ export function usePlayer() {
     playOptions,
     currentIndex: playIndex,
     totalSongs: currentPlaylist?.songs?.length || 0,
+    currentSubsong,
+    maxSubsongs: currentSong?.subsongs || (currentSong?.songlengths?.length) || 1,
     play: startPlaylist,
     stop,
     skip,
     previous,
+    nextSubsong,
+    previousSubsong,
+    playSubsong,
     pause: stop
   }
 }

@@ -343,18 +343,20 @@ export const clearPlayHistory = async () => {
   })
 }
 
-// Export all data (settings, playlists, favourites)
+// Export all data (settings, playlists, favourites, song preferences)
 export const exportAllData = async () => {
   const settings = await getSettings()
   const playlists = await getAllPlaylists()
   const favourites = await getAllFavourites()
+  const songPrefs = getAllSongPrefs()
   
   return {
     version: 1,
     exportedAt: new Date().toISOString(),
     settings: settings || {},
     playlists: playlists || [],
-    favourites: favourites || []
+    favourites: favourites || [],
+    songPrefs: songPrefs || {}
   }
 }
 
@@ -411,5 +413,50 @@ export const importAllData = async (data) => {
     }
   }
   
+  // Import song preferences
+  if (data.songPrefs && typeof data.songPrefs === 'object') {
+    saveAllSongPrefs(data.songPrefs)
+  }
+  
   return true
+}
+
+// ========== SONG PREFERENCES (subsong settings) ==========
+
+const SONG_PREFS_KEY = 'uc64_song_prefs'
+
+const getAllSongPrefs = () => {
+  try {
+    const data = localStorage.getItem(SONG_PREFS_KEY)
+    return data ? JSON.parse(data) : {}
+  } catch (e) {
+    return {}
+  }
+}
+
+const saveAllSongPrefs = (prefs) => {
+  try {
+    localStorage.setItem(SONG_PREFS_KEY, JSON.stringify(prefs))
+  } catch (e) {
+    // Ignore storage errors
+  }
+}
+
+export const getSongPrefs = (songId) => {
+  const allPrefs = getAllSongPrefs()
+  return allPrefs[songId] || { defaultSubsong: 1, autoPlaySubsongs: false }
+}
+
+export const setSongPrefs = (songId, prefs) => {
+  const allPrefs = getAllSongPrefs()
+  allPrefs[songId] = { ...getSongPrefs(songId), ...prefs }
+  saveAllSongPrefs(allPrefs)
+}
+
+export const setDefaultSubsong = (songId, subsong) => {
+  setSongPrefs(songId, { defaultSubsong: subsong })
+}
+
+export const setAutoPlaySubsongs = (songId, autoPlay) => {
+  setSongPrefs(songId, { autoPlaySubsongs: autoPlay })
 }

@@ -45,7 +45,8 @@ function SearchResults({ results, query }) {
       }
       // Start new preview
       try {
-        const collection = song.id.startsWith('hvsc_') ? 'hvsc' : 'cgsc'
+        // Use the collection property from the song object (set by search)
+        const collection = song.collection || 'hvsc'
         if (song.type === 'sid') {
           await playSid(song.path, collection)
         } else if (song.type === 'mus') {

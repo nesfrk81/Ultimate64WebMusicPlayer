@@ -192,7 +192,8 @@ export const checkSonglengthsAvailable = async () => {
     const decompressed = decompressGzip(arrayBuffer)
     const data = JSON.parse(decompressed)
     
-    const songsWithLengths = data.songs?.filter(s => s.songlengths && s.songlengths.length > 0) || []
+    // Using 'l' (shortened key for songlengths)
+    const songsWithLengths = data.songs?.filter(s => s.l && s.l.length > 0) || []
     const hasLengths = songsWithLengths.length > 0
     
     if (hasLengths) {

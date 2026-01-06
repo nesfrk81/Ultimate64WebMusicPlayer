@@ -1,17 +1,34 @@
 import { useState, useEffect } from 'react'
-import { getSongTime, setSongTime, removeSongTime } from '../services/storage'
+import { getSongTime, setSongTime, removeSongTime, getSongPrefs, setDefaultSubsong, setAutoPlaySubsongs } from '../services/storage'
 import './NowPlaying.css'
 
 function NowPlaying({ player, onBack }) {
-  const { isPlaying, currentSong, remainingTime, playOptions, currentIndex, totalSongs, stop, skip, previous } = player
+  const { 
+    isPlaying, 
+    currentSong, 
+    remainingTime, 
+    playOptions, 
+    currentIndex, 
+    totalSongs, 
+    stop, 
+    skip, 
+    previous,
+    currentSubsong,
+    maxSubsongs,
+    nextSubsong,
+    previousSubsong
+  } = player
   const [customTime, setCustomTime] = useState(null)
   const [hasCustomTime, setHasCustomTime] = useState(false)
+  const [autoPlaySubsongsEnabled, setAutoPlaySubsongsEnabled] = useState(false)
+  const [isDefaultSubsong, setIsDefaultSubsong] = useState(false)
 
   useEffect(() => {
     if (currentSong) {
       loadCustomTime()
+      loadSongPrefs()
     }
-  }, [currentSong])
+  }, [currentSong, currentSubsong])
 
   const loadCustomTime = async () => {
     if (!currentSong) return
@@ -24,6 +41,38 @@ function NowPlaying({ player, onBack }) {
       setCustomTime(null)
       setHasCustomTime(false)
     }
+  }
+
+  const loadSongPrefs = () => {
+    if (!currentSong) return
+    const songId = currentSong.songId || currentSong.id
+    const prefs = getSongPrefs(songId)
+    setAutoPlaySubsongsEnabled(prefs?.autoPlaySubsongs || false)
+    
+    // Check if current subsong is the default (either user-set or SID's built-in)
+    const sidDefaultSubsong = currentSong.startSong || 1
+    const userDefaultSubsong = prefs?.defaultSubsong
+    
+    // It's the "main" subsong if user has set it, OR if it matches SID's default and user hasn't set a different one
+    const isMain = userDefaultSubsong 
+      ? userDefaultSubsong === currentSubsong 
+      : currentSubsong === sidDefaultSubsong
+    setIsDefaultSubsong(isMain)
+  }
+
+  const handleSetAsMain = () => {
+    if (!currentSong) return
+    const songId = currentSong.songId || currentSong.id
+    setDefaultSubsong(songId, currentSubsong)
+    setIsDefaultSubsong(true)
+  }
+
+  const handleToggleAutoPlaySubsongs = () => {
+    if (!currentSong) return
+    const songId = currentSong.songId || currentSong.id
+    const newValue = !autoPlaySubsongsEnabled
+    setAutoPlaySubsongs(songId, newValue)
+    setAutoPlaySubsongsEnabled(newValue)
   }
 
   const handleSetCustomTime = async () => {
@@ -130,6 +179,51 @@ function NowPlaying({ player, onBack }) {
               </button>
             )}
           </div>
+
+          {maxSubsongs > 1 && (
+            <div className="subsong-section">
+              <div className="subsong-nav">
+                <button 
+                  className="subsong-button"
+                  onClick={previousSubsong} 
+                  disabled={currentSubsong <= 1}
+                  aria-label="Previous subsong"
+                >
+                  ◀ Sub
+                </button>
+                <span className="subsong-display">
+                  Subsong {currentSubsong}/{maxSubsongs}
+                </span>
+                <button 
+                  className="subsong-button"
+                  onClick={nextSubsong} 
+                  disabled={currentSubsong >= maxSubsongs}
+                  aria-label="Next subsong"
+                >
+                  Sub ▶
+                </button>
+              </div>
+              
+              <div className="subsong-prefs">
+                <button 
+                  className={`set-main-button ${isDefaultSubsong ? 'is-default' : ''}`}
+                  onClick={handleSetAsMain}
+                  disabled={isDefaultSubsong}
+                >
+                  {isDefaultSubsong ? '★ Main subsong' : 'Set as main'}
+                </button>
+                
+                <label className="auto-play-label">
+                  <input 
+                    type="checkbox" 
+                    checked={autoPlaySubsongsEnabled}
+                    onChange={handleToggleAutoPlaySubsongs}
+                  />
+                  Auto play subsongs
+                </label>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div className="player-actions">

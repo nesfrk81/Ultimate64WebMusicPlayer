@@ -24,6 +24,33 @@ function calculateMD5(filePath) {
   return crypto.createHash('md5').update(fileBuffer).digest('hex')
 }
 
+// Parse SID file header to extract song information
+function parseSidHeader(filePath) {
+  try {
+    const buffer = fs.readFileSync(filePath)
+    
+    // Check magic number (PSID or RSID)
+    const magic = buffer.toString('ascii', 0, 4)
+    if (magic !== 'PSID' && magic !== 'RSID') {
+      return null
+    }
+    
+    // Read number of songs (offset 0x0E, 2 bytes big-endian)
+    const numSongs = buffer.readUInt16BE(0x0E)
+    
+    // Read start song (offset 0x10, 2 bytes big-endian)
+    const startSong = buffer.readUInt16BE(0x10)
+    
+    return {
+      numSongs: Math.max(1, numSongs),
+      startSong: Math.max(1, startSong)
+    }
+  } catch (error) {
+    console.warn(`Warning: Could not parse SID header for ${filePath}:`, error.message)
+    return null
+  }
+}
+
 // Parse Songlengths.md5 file
 function parseSonglengths() {
   const songlengths = new Map()
@@ -145,20 +172,40 @@ async function generateHVSCIndex(songlengths) {
       const md5 = calculateMD5(filePath)
       const metadata = extractMetadata(filePath, 'hvsc')
       const songlength = songlengths.get(md5)
+      const sidInfo = parseSidHeader(filePath)
       
+      // Minimal song object - removed redundant fields to reduce file size:
+      // - id: can use array index
+      // - type: always 'sid' for HVSC
+      // - category: can be derived from path
+      // - subsongs: can be derived from songlengths.length
+      // - md5: only needed during indexing, not at runtime (songlengths already embedded)
       const song = {
-        id: `hvsc_${processed + 1}`,
-        name: metadata.name,
-        path: metadata.path,
-        category: metadata.category,
-        artist: metadata.artist,
-        type: 'sid',
-        md5: md5
+        n: metadata.name,  // name (shortened key)
+        p: metadata.path   // path (shortened key)
+      }
+      
+      // Only include artist if not null
+      if (metadata.artist) {
+        song.a = metadata.artist
       }
       
       if (songlength) {
-        song.songlengths = songlength.durations
-        song.subsongs = songlength.durations.length
+        song.l = songlength.durations  // songlengths (shortened key)
+      }
+      
+      // Add startSong only if != 1 (to save space, most are 1)
+      if (sidInfo && sidInfo.startSong > 1) {
+        song.s = sidInfo.startSong  // startSong (shortened key)
+      }
+      
+      // Add subsongs count only if different from songlengths count
+      // (header may have different count than songlengths database)
+      if (sidInfo) {
+        const songlengthCount = songlength ? songlength.durations.length : 0
+        if (sidInfo.numSongs !== songlengthCount && sidInfo.numSongs > 1) {
+          song.c = sidInfo.numSongs  // subsongs count (shortened key)
+        }
       }
       
       songs.push(song)

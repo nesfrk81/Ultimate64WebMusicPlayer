@@ -69,8 +69,13 @@ function PlaylistView({ playlist, onBack, onPlay }) {
 
       // Load full song data
       const songPromises = songIds.map(async (songId) => {
-        // Try to determine collection from songId format
-        const collection = songId.startsWith('hvsc_') ? 'hvsc' : 'cgsc'
+        // Determine collection from songId format
+        // New format: hvsc:/path or cgsc:/path
+        // Legacy format: hvsc_123 or cgsc_123
+        let collection = 'hvsc'
+        if (songId.startsWith('cgsc:') || songId.startsWith('cgsc_')) {
+          collection = 'cgsc'
+        }
         const song = await getSongById(songId, collection)
         return song ? { ...song, songId } : null
       })
@@ -134,7 +139,8 @@ function PlaylistView({ playlist, onBack, onPlay }) {
       }
       // Start new preview
       try {
-        const collection = songId.startsWith('hvsc_') ? 'hvsc' : 'cgsc'
+        // Use the collection property from the song object
+        const collection = song.collection || 'hvsc'
         if (song.type === 'sid') {
           await playSid(song.path, collection)
         } else if (song.type === 'mus') {

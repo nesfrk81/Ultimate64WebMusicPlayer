@@ -43,7 +43,8 @@ export const loadIndices = async () => {
       hvscIndex = JSON.parse(jsonText)
       
       // Check if songlengths are available and update settings
-      const songsWithLengths = hvscIndex?.songs?.filter(s => s.songlengths && s.songlengths.length > 0) || []
+      // Using 'l' (shortened key for songlengths)
+      const songsWithLengths = hvscIndex?.songs?.filter(s => s.l && s.l.length > 0) || []
       const hasLengths = songsWithLengths.length > 0
       
       if (hasLengths) {
@@ -82,19 +83,28 @@ export const searchSongs = async (query, options = {}) => {
   }
 
   // Search HVSC (SID files)
+  // Index uses shortened keys: n=name, p=path, a=artist, l=songlengths, s=startSong, c=subsongs
   if (hvscIndex && hvscIndex.songs) {
-    for (const song of hvscIndex.songs) {
+    for (let i = 0; i < hvscIndex.songs.length; i++) {
       if (results.length >= MAX_SEARCH_RESULTS) break
       
+      const song = hvscIndex.songs[i]
       const matches = 
-        song.name?.toLowerCase().includes(searchTerm) ||
-        song.path?.toLowerCase().includes(searchTerm) ||
-        song.artist?.toLowerCase().includes(searchTerm) ||
-        song.category?.toLowerCase().includes(searchTerm)
+        song.n?.toLowerCase().includes(searchTerm) ||
+        song.p?.toLowerCase().includes(searchTerm) ||
+        song.a?.toLowerCase().includes(searchTerm)
 
       if (matches) {
+        // Expand shortened keys back to full names
+        // Use path as stable ID (prefixed with hvsc:) - survives index regeneration
         results.push({
-          ...song,
+          id: `hvsc:${song.p}`,
+          name: song.n,
+          path: song.p,
+          artist: song.a || null,
+          songlengths: song.l || null,
+          startSong: song.s || 1,
+          subsongs: song.c || (song.l?.length) || 1,
           collection: 'hvsc',
           type: 'sid'
         })
@@ -103,6 +113,7 @@ export const searchSongs = async (query, options = {}) => {
   }
 
   // Search CGSC (MUS files) - only if MUS is enabled
+  // CGSC still uses full field names (not optimized for size)
   if (shouldIncludeMus && cgscIndex && cgscIndex.songs && results.length < MAX_SEARCH_RESULTS) {
     for (const song of cgscIndex.songs) {
       if (results.length >= MAX_SEARCH_RESULTS) break
@@ -137,6 +148,26 @@ export const searchSongs = async (query, options = {}) => {
   return results
 }
 
+// Expand a song from the shortened index format to full format
+// Uses path as stable ID (prefixed with hvsc: or cgsc:)
+const expandSong = (song, collection) => {
+  if (collection === 'hvsc') {
+    return {
+      id: `hvsc:${song.p}`,
+      name: song.n,
+      path: song.p,
+      artist: song.a || null,
+      songlengths: song.l || null,
+      startSong: song.s || 1,
+      subsongs: song.c || (song.l?.length) || 1,
+      collection: 'hvsc',
+      type: 'sid'
+    }
+  }
+  // CGSC uses full field names
+  return { ...song, id: `cgsc:${song.path}`, collection: 'cgsc', type: 'mus' }
+}
+
 export const getSongById = async (songId, collection) => {
   if (!hvscIndex && !cgscIndex) {
     await loadIndices()
@@ -147,5 +178,32 @@ export const getSongById = async (songId, collection) => {
     return null
   }
 
-  return index.songs.find(song => song.id === songId) || null
+  // New path-based ID format: hvsc:/path/to/song.sid or cgsc:/path/to/song.mus
+  if (songId.startsWith('hvsc:') || songId.startsWith('cgsc:')) {
+    const path = songId.substring(5) // Remove 'hvsc:' or 'cgsc:' prefix
+    const song = index.songs.find(s => (s.p || s.path) === path)
+    if (song) {
+      return expandSong(song, collection)
+    }
+    return null
+  }
+
+  // Legacy support: old index-based IDs (hvsc_1, hvsc_2, etc.)
+  if (collection === 'hvsc' && songId.startsWith('hvsc_')) {
+    const idNum = parseInt(songId.replace('hvsc_', ''), 10)
+    const arrayIdx = idNum - 1  // Convert 1-based ID to 0-based array index
+    if (!isNaN(arrayIdx) && arrayIdx >= 0 && arrayIdx < index.songs.length) {
+      return expandSong(index.songs[arrayIdx], collection)
+    }
+  }
+  
+  // For CGSC legacy, try to find by original id field
+  if (collection === 'cgsc') {
+    const song = index.songs.find(s => s.id === songId)
+    if (song) {
+      return expandSong(song, collection)
+    }
+  }
+  
+  return null
 }
