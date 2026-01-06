@@ -53,8 +53,9 @@ function PlaylistList({ onPlaylistSelect }) {
           <button
             className="create-playlist-button"
             onClick={() => setShowCreateDialog(true)}
+            aria-label="Create new playlist"
           >
-            + New Playlist
+            New
           </button>
         </div>
         <ul className="playlist-items">

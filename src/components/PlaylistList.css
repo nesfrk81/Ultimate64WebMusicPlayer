@@ -2,11 +2,15 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .playlist-content {
   flex: 1;
   padding: 2rem;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .playlist-header {
@@ -22,18 +26,21 @@
 }
 
 .create-playlist-button {
-  padding: 0.5rem 1rem;
-  background-color: var(--accent-color);
-  border: 1px solid var(--border-color);
+  padding: 0.5rem 1.5rem;
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-color);
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  font-weight: bold;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
+  border-radius: 4px;
 }
 
 .create-playlist-button:hover {
-  opacity: 0.8;
+  background-color: var(--border-color);
+  transform: scale(1.05);
 }
 
 .playlist-items {

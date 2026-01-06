@@ -233,12 +233,26 @@ export const testConnection = async () => {
 
 // Check if songlengths are available in our local index
 // The songlength data is baked into hvsc-index.json, so we check if that data exists
+// First tries to use the already-loaded index, then falls back to fetching
 export const checkSonglengthsAvailable = async () => {
   try {
+    // First, try to use the already-loaded index from search.js
+    const { loadIndices } = await import('./search')
+    
+    // Ensure indices are loaded
+    await loadIndices()
+    
+    // Try to access the loaded index (this is a bit of a hack, but works)
+    // We'll fetch it again to be safe, but with better error handling
+    const BASE_URL = import.meta.env.BASE_URL
+    const indexUrl = `${BASE_URL}data/hvsc-index.json`
+    
+    console.log('Checking songlengths availability from:', indexUrl)
+    
     // Check if we have the index with songlength data
-    const response = await fetch('/data/hvsc-index.json')
+    const response = await fetch(indexUrl)
     if (!response.ok) {
-      console.log('HVSC index not found')
+      console.log('HVSC index not found:', response.status, response.statusText)
       return false
     }
     
@@ -249,6 +263,21 @@ export const checkSonglengthsAvailable = async () => {
     const hasLengths = songsWithLengths.length > 0
     
     console.log(`Songlengths available: ${hasLengths} (${songsWithLengths.length} songs with lengths)`)
+    
+    // Update settings if songlengths are available
+    if (hasLengths) {
+      try {
+        const { getSettings, saveSettings } = await import('./storage')
+        const currentSettings = await getSettings()
+        if (currentSettings && currentSettings.songlengthsAvailable !== true) {
+          console.log('Updating settings: songlengths are now available')
+          await saveSettings({ ...currentSettings, songlengthsAvailable: true })
+        }
+      } catch (err) {
+        console.warn('Could not update songlengths availability in settings:', err)
+      }
+    }
+    
     return hasLengths
   } catch (error) {
     console.error('Error checking songlengths:', error)

@@ -1,21 +1,59 @@
 import { getSettings } from './storage'
 
+const BASE_URL = import.meta.env.BASE_URL
+
 let hvscIndex = null
 let cgscIndex = null
 
 export const loadIndices = async () => {
   try {
+    const hvscUrl = `${BASE_URL}data/hvsc-index.json`
+    const cgscUrl = `${BASE_URL}data/cgsc-index.json`
+    
+    console.log('Loading indices from:', { hvscUrl, cgscUrl, BASE_URL })
+    
     const [hvscResponse, cgscResponse] = await Promise.all([
-      fetch('/data/hvsc-index.json').catch(() => null),
-      fetch('/data/cgsc-index.json').catch(() => null)
+      fetch(hvscUrl).catch((err) => {
+        console.error('Failed to fetch HVSC index:', err)
+        return null
+      }),
+      fetch(cgscUrl).catch((err) => {
+        console.error('Failed to fetch CGSC index:', err)
+        return null
+      })
     ])
 
     if (hvscResponse && hvscResponse.ok) {
       hvscIndex = await hvscResponse.json()
+      console.log('HVSC index loaded:', hvscIndex?.songs?.length || 0, 'songs')
+      
+      // Check if songlengths are available and update settings
+      const songsWithLengths = hvscIndex?.songs?.filter(s => s.songlengths && s.songlengths.length > 0) || []
+      const hasLengths = songsWithLengths.length > 0
+      console.log(`Songlengths available in index: ${hasLengths} (${songsWithLengths.length} songs with lengths)`)
+      
+      // Update settings if songlengths are available
+      if (hasLengths) {
+        try {
+          const { getSettings, saveSettings } = await import('./storage')
+          const currentSettings = await getSettings()
+          if (currentSettings && currentSettings.songlengthsAvailable !== true) {
+            console.log('Updating settings: songlengths are now available')
+            await saveSettings({ ...currentSettings, songlengthsAvailable: true })
+          }
+        } catch (err) {
+          console.warn('Could not update songlengths availability in settings:', err)
+        }
+      }
+    } else {
+      console.warn('HVSC index not loaded:', hvscResponse?.status, hvscResponse?.statusText)
     }
 
     if (cgscResponse && cgscResponse.ok) {
       cgscIndex = await cgscResponse.json()
+      console.log('CGSC index loaded:', cgscIndex?.songs?.length || 0, 'songs')
+    } else {
+      console.warn('CGSC index not loaded:', cgscResponse?.status, cgscResponse?.statusText)
     }
   } catch (error) {
     console.error('Failed to load song indices:', error)
@@ -25,14 +63,11 @@ export const loadIndices = async () => {
 const MAX_SEARCH_RESULTS = 1000
 
 export const searchSongs = async (query, options = {}) => {
-  const { includeMus = true } = options
-  
-  // Check if MUS should be included
-  const settings = await getSettings()
-  const musEnabled = settings && settings.musPlayerPath && settings.musPlayerPath.trim() !== ''
-  const shouldIncludeMus = includeMus && musEnabled
+  // MUS file support is disabled for now
+  const shouldIncludeMus = false
 
   if (!hvscIndex && !cgscIndex) {
+    console.log('Indices not loaded, loading now...')
     await loadIndices()
   }
 
@@ -42,6 +77,13 @@ export const searchSongs = async (query, options = {}) => {
   if (!searchTerm) {
     return results
   }
+
+  console.log('Searching for:', searchTerm, {
+    hvscLoaded: !!hvscIndex,
+    cgscLoaded: !!cgscIndex,
+    hvscSongs: hvscIndex?.songs?.length || 0,
+    cgscSongs: cgscIndex?.songs?.length || 0
+  })
 
   // Search HVSC (SID files)
   if (hvscIndex && hvscIndex.songs) {

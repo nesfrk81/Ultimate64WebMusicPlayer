@@ -1,8 +1,8 @@
 /* C64 BASIC Theme */
 :root[data-theme="c64-basic"] {
   --bg-primary: #483AAA;
-  --text-primary: #867ADE;
-  --text-secondary: #FFFFFF;
+  --text-primary: #FFFFFF;
+  --text-secondary: #E0E0E0;
   --border-color: #867ADE;
   --accent-color: #84C5CC;
 }
@@ -10,8 +10,8 @@
 /* Dark Theme */
 :root[data-theme="dark"] {
   --bg-primary: #1a1a1a;
-  --text-primary: #e0e0e0;
-  --text-secondary: #b0b0b0;
+  --text-primary: #FFFFFF;
+  --text-secondary: #E0E0E0;
   --border-color: #404040;
   --accent-color: #84C5CC;
 }
@@ -19,8 +19,8 @@
 /* Default to C64 BASIC if no theme set */
 :root {
   --bg-primary: #483AAA;
-  --text-primary: #867ADE;
-  --text-secondary: #FFFFFF;
+  --text-primary: #FFFFFF;
+  --text-secondary: #E0E0E0;
   --border-color: #867ADE;
   --accent-color: #84C5CC;
 }

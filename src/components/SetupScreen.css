@@ -2,14 +2,25 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .setup-content {
   flex: 1;
-  padding: 2rem;
+  padding: 1rem;
   max-width: 600px;
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+@media (max-width: 600px) {
+  .setup-content {
+    padding: 1rem 0.75rem;
+  }
 }
 
 .setup-content h2 {
@@ -39,6 +50,8 @@
   color: var(--text-primary);
   font-family: inherit;
   font-size: 1rem;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 .form-group input[type="text"]:focus,
@@ -96,18 +109,43 @@
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
-.back-button {
+@media (max-width: 600px) {
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+.form-actions button,
+.back-button,
+.save-button {
   flex: 1;
   padding: 1rem;
-  background-color: var(--bg-primary);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
   font-size: 1rem;
   font-family: inherit;
   cursor: pointer;
   transition: opacity 0.2s, background-color 0.2s;
+  height: 3.5rem;
+  min-height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  box-sizing: border-box;
+  line-height: 1rem !important;
+  margin: 0;
+}
+
+.back-button {
+  background-color: var(--bg-primary);
 }
 
 .back-button:hover {
@@ -116,19 +154,14 @@
 }
 
 .save-button {
-  flex: 1;
-  padding: 1rem;
-  background-color: var(--accent-color);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  font-size: 1rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: opacity 0.2s;
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  font-weight: bold;
 }
 
 .save-button:hover:not(:disabled) {
-  opacity: 0.8;
+  background-color: var(--border-color);
+  transform: scale(1.02);
 }
 
 .save-button:disabled {
@@ -152,10 +185,12 @@
 .confirm-dialog {
   background-color: var(--bg-primary);
   border: 2px solid var(--border-color);
-  padding: 2rem;
-  max-width: 400px;
+  padding: 1.5rem;
   width: 90%;
+  max-width: min(400px, calc(100% - 2rem));
+  margin: 1rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
 }
 
 .confirm-dialog h3 {
@@ -177,11 +212,11 @@
 
 .confirm-button {
   padding: 0.75rem 1.5rem;
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
   font-size: 1rem;
   font-family: inherit;
   cursor: pointer;
-  transition: opacity 0.2s, background-color 0.2s;
+  transition: all 0.2s;
 }
 
 .confirm-button.cancel {
@@ -190,15 +225,18 @@
 }
 
 .confirm-button.cancel:hover {
-  background-color: var(--accent-color);
-  opacity: 0.8;
+  background-color: var(--border-color);
+  transform: scale(1.02);
 }
 
 .confirm-button.ok {
-  background-color: var(--accent-color);
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-color);
   color: var(--text-primary);
+  font-weight: bold;
 }
 
 .confirm-button.ok:hover {
-  opacity: 0.8;
+  background-color: var(--border-color);
+  transform: scale(1.02);
 }

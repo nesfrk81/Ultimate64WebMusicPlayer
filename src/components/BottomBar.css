@@ -2,6 +2,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   padding: 0.75rem 1.5rem;
   background-color: var(--bg-primary);
   border-top: 2px solid var(--border-color);

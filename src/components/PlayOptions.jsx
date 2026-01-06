@@ -12,8 +12,6 @@ function PlayOptions({ options, onChange, onPlay, onStop, onBack, songCount, isP
     onChange(updated)
   }
 
-  const isMusEnabled = settings?.musPlayerPath && settings.musPlayerPath.trim() !== ''
-
   return (
     <div className="play-options">
       {!hideOptions && (
@@ -57,24 +55,19 @@ function PlayOptions({ options, onChange, onPlay, onStop, onBack, songCount, isP
             )}
           </div>
 
-          {isMusEnabled && (
-            <div className="options-group">
-              <div className="option-info">
-                Default MUS play time: {settings?.defaultMusPlayTime || 60} seconds
-              </div>
-            </div>
-          )}
         </>
       )}
 
       <div className="action-buttons">
-        <button
-          className="stop-button"
-          onClick={onStop}
-          disabled={!isPlaying}
-        >
-          Stop
-        </button>
+        {isPlaying && (
+          <button
+            className="stop-button"
+            onClick={onStop}
+            aria-label="Stop"
+          >
+            ■
+          </button>
+        )}
         <button
           className="play-button"
           onClick={onPlay}
@@ -86,8 +79,9 @@ function PlayOptions({ options, onChange, onPlay, onStop, onBack, songCount, isP
           <button
             className="back-button"
             onClick={onBack}
+            aria-label="Back"
           >
-            ← Back
+            ←
           </button>
         )}
       </div>

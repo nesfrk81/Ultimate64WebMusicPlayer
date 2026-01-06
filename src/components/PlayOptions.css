@@ -57,11 +57,15 @@
   padding: 1rem;
   background-color: #d32f2f;
   border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  font-size: 1.2rem;
+  color: white;
+  font-size: 1.8rem;
   font-family: inherit;
   cursor: pointer;
   transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .stop-button:hover:not(:disabled) {
@@ -80,10 +84,14 @@
   background-color: var(--bg-primary);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
-  font-size: 1.2rem;
+  font-size: 1.8rem;
   font-family: inherit;
   cursor: pointer;
   transition: opacity 0.2s, background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .back-button:hover {
@@ -94,17 +102,19 @@
 .play-button {
   flex: 2;
   padding: 1rem;
-  background-color: var(--accent-color);
-  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-color);
   color: var(--text-primary);
   font-size: 1.2rem;
   font-family: inherit;
+  font-weight: bold;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
 }
 
 .play-button:hover:not(:disabled) {
-  opacity: 0.8;
+  background-color: var(--border-color);
+  transform: scale(1.02);
 }
 
 .play-button:disabled {

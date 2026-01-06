@@ -60,21 +60,25 @@
 
 .dialog-button.cancel {
   background-color: var(--bg-primary);
+  border: 2px solid var(--border-color);
   color: var(--text-primary);
 }
 
 .dialog-button.cancel:hover {
-  background-color: var(--accent-color);
-  opacity: 0.8;
+  background-color: var(--border-color);
+  transform: scale(1.02);
 }
 
 .dialog-button.create {
-  background-color: var(--accent-color);
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-color);
   color: var(--text-primary);
+  font-weight: bold;
 }
 
 .dialog-button.create:hover:not(:disabled) {
-  opacity: 0.8;
+  background-color: var(--border-color);
+  transform: scale(1.05);
 }
 
 .dialog-button.create:disabled {

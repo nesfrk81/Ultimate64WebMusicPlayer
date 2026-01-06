@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { getSongTime, setSongTime, removeSongTime } from '../services/storage'
-import SongBadge from './SongBadge'
 import './NowPlaying.css'
 
 function NowPlaying({ player, onBack }) {
@@ -97,7 +96,6 @@ function NowPlaying({ player, onBack }) {
       <div className="player-content">
         <div className="current-song">
           <div className="song-header">
-            <SongBadge type={currentSong.type} />
             <div className="song-title">
               <h3>{currentSong.name || 'Unknown'}</h3>
               {currentSong.artist && (
@@ -138,8 +136,9 @@ function NowPlaying({ player, onBack }) {
         <button
           className="stop-button"
           onClick={handleStop}
+          aria-label="Stop"
         >
-          Stop
+          ■
         </button>
         <button
           className="next-button"
@@ -151,8 +150,9 @@ function NowPlaying({ player, onBack }) {
         <button
           className="back-button"
           onClick={onBack}
+          aria-label="Back"
         >
-          ← Back
+          ←
         </button>
       </div>
     </div>

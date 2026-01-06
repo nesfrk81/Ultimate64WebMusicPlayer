@@ -19,6 +19,7 @@ export function usePlayer() {
   const playOptionsRef = useRef(null)
   const playIndexRef = useRef(0)
   const playedSongsRef = useRef(new Set())
+  const shuffledOrderRef = useRef(null) // Store shuffled order for consistent looping
 
   useEffect(() => {
     return () => {
@@ -179,6 +180,7 @@ export function usePlayer() {
     setPlayIndex(0)
     setRemainingTime(0)
     setPlayedSongs(new Set())
+    shuffledOrderRef.current = null
     
     try {
       await stopPlayback()
@@ -236,27 +238,47 @@ export function usePlayer() {
     let nextIndex = currentIndex
 
     if (options.shuffle) {
-      // Shuffle: pick random song that hasn't been played
-      const unplayedSongs = songs.filter((_, idx) => !played.has(idx))
+      // Shuffle: use stored shuffled order for consistent looping
+      let shuffledOrder = shuffledOrderRef.current
       
-      if (unplayedSongs.length === 0) {
-        // All songs played, reset if looping
+      // If no shuffled order exists, create one
+      if (!shuffledOrder || shuffledOrder.length !== songs.length) {
+        // Create shuffled array of indices
+        shuffledOrder = Array.from({ length: songs.length }, (_, i) => i)
+        // Fisher-Yates shuffle
+        for (let i = shuffledOrder.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffledOrder[i], shuffledOrder[j]] = [shuffledOrder[j], shuffledOrder[i]]
+        }
+        shuffledOrderRef.current = shuffledOrder
+        console.log('Created new shuffled order:', shuffledOrder)
+      }
+      
+      // Find current position in shuffled order
+      const currentShuffledIndex = shuffledOrder.indexOf(currentIndex)
+      
+      if (currentShuffledIndex === -1) {
+        // Current index not in shuffled order (shouldn't happen), use first
+        nextIndex = shuffledOrder[0]
+      } else if (currentShuffledIndex < shuffledOrder.length - 1) {
+        // Not at end of shuffled order, play next
+        nextIndex = shuffledOrder[currentShuffledIndex + 1]
+      } else {
+        // At end of shuffled order
         if (options.loop) {
-          const newPlayed = new Set()
-          setPlayedSongs(newPlayed)
-          playedSongsRef.current = newPlayed
-          nextIndex = Math.floor(Math.random() * songs.length)
+          // Loop: start from beginning of same shuffled order
+          nextIndex = shuffledOrder[0]
+          console.log('Looping: restarting with same shuffled order')
         } else {
           await stop()
           return
         }
-      } else {
-        const randomSong = unplayedSongs[Math.floor(Math.random() * unplayedSongs.length)]
-        nextIndex = songs.findIndex(s => s.songId === randomSong.songId || s.id === randomSong.id)
-        const newPlayed = new Set([...played, nextIndex])
-        setPlayedSongs(newPlayed)
-        playedSongsRef.current = newPlayed
       }
+      
+      // Update played songs tracking (for display purposes)
+      const newPlayed = new Set([...played, nextIndex])
+      setPlayedSongs(newPlayed)
+      playedSongsRef.current = newPlayed
     } else {
       // Normal: play next song
       nextIndex = (currentIndex + 1) % songs.length
@@ -289,6 +311,7 @@ export function usePlayer() {
     setPlayIndex(0)
     playedSongsRef.current = new Set()
     playIndexRef.current = 0
+    shuffledOrderRef.current = null // Reset shuffled order for new playlist
 
     // Create playlist object with songs
     const playlistWithSongs = { ...playlist, songs }
@@ -296,10 +319,19 @@ export function usePlayer() {
     // Determine starting index
     let startIndex = 0
     if (options.shuffle) {
-      startIndex = Math.floor(Math.random() * songs.length)
+      // Create shuffled order first
+      const shuffledOrder = Array.from({ length: songs.length }, (_, i) => i)
+      // Fisher-Yates shuffle
+      for (let i = shuffledOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledOrder[i], shuffledOrder[j]] = [shuffledOrder[j], shuffledOrder[i]]
+      }
+      shuffledOrderRef.current = shuffledOrder
+      startIndex = shuffledOrder[0] // Start with first song in shuffled order
       const initialPlayed = new Set([startIndex])
       setPlayedSongs(initialPlayed)
       playedSongsRef.current = initialPlayed
+      console.log('Created shuffled order for playlist:', shuffledOrder)
     }
 
     setPlayIndex(startIndex)

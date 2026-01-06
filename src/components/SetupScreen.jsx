@@ -121,8 +121,6 @@ function SetupScreen({ onComplete }) {
     setShowConfirmDialog(false)
   }
 
-  const isMusEnabled = formData.musPlayerPath && formData.musPlayerPath.trim() !== ''
-
   if (isLoading) {
     return (
       <div className="setup-screen">
@@ -164,30 +162,7 @@ function SetupScreen({ onComplete }) {
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="cgscPath">CGSC Base Path on C64</label>
-            <input
-              type="text"
-              id="cgscPath"
-              name="cgscPath"
-              value={formData.cgscPath}
-              onChange={handleChange}
-              placeholder="/Usb0/CGSC/"
-            />
-          </div>
 
-          <div className="form-group">
-            <label htmlFor="musPlayerPath">MUS Player Program Path (optional)</label>
-            <input
-              type="text"
-              id="musPlayerPath"
-              name="musPlayerPath"
-              value={formData.musPlayerPath}
-              onChange={handleChange}
-              placeholder="/Usb0/TOOLS/musplayer.prg"
-            />
-            <small>Leave empty to disable MUS file support</small>
-          </div>
 
           <div className="form-group">
             <label className="toggle-label">
@@ -198,7 +173,7 @@ function SetupScreen({ onComplete }) {
                 onChange={handleChange}
                 disabled={songlengthsAvailable === false}
               />
-              <span>Use SID songlength file</span>
+              <span> Use SID songlength file</span>
               {songlengthsAvailable === false && (
                 <span className="option-disabled-hint"> (not available)</span>
               )}
@@ -225,22 +200,6 @@ function SetupScreen({ onComplete }) {
             </div>
           )}
 
-          {isMusEnabled && (
-            <div className="form-group">
-              <label htmlFor="defaultMusPlayTime">
-                Default MUS Play Time: {formData.defaultMusPlayTime} seconds
-              </label>
-              <input
-                type="range"
-                id="defaultMusPlayTime"
-                name="defaultMusPlayTime"
-                min="5"
-                max="300"
-                value={formData.defaultMusPlayTime}
-                onChange={handleChange}
-              />
-            </div>
-          )}
 
           <div className="form-group">
             <label htmlFor="theme">Theme</label>

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import SongBadge from './SongBadge'
 import { useFavourites } from '../hooks/useFavourites'
 import { usePlaylists } from '../hooks/usePlaylists'
 import { playSid, playMus, stopPlayback } from '../services/api'
@@ -87,11 +86,10 @@ function SearchResults({ results, query }) {
         {results.map(song => (
           <div key={song.id} className="search-result-item">
             <div className="result-info">
-              <SongBadge type={song.type} />
               <div className="result-details">
                 <div className="result-name">{song.name || 'Unknown'}</div>
                 {song.artist && (
-                  <div className="result-artist">Artist: {song.artist}</div>
+                  <div className="result-artist">{song.artist}</div>
                 )}
                 <div className="result-path">{song.path}</div>
               </div>

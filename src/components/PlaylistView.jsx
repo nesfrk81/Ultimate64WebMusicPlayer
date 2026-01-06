@@ -5,18 +5,20 @@ import { usePlaylists } from '../hooks/usePlaylists'
 import { useFavourites } from '../hooks/useFavourites'
 import { useSettings } from '../hooks/useSettings'
 import { playSid, playMus, stopPlayback } from '../services/api'
-import SongBadge from './SongBadge'
 import PlayOptions from './PlayOptions'
 import './PlaylistView.css'
 
 function PlaylistView({ playlist, onBack, onPlay }) {
-  const { playlists, removeSong } = usePlaylists()
+  const { playlists, removeSong, removePlaylist } = usePlaylists()
   const { remove: removeFavourite } = useFavourites()
   const { settings } = useSettings()
   const [songs, setSongs] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [optionsInitialized, setOptionsInitialized] = useState(false)
   const [previewingId, setPreviewingId] = useState(null)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showRemoveSongDialog, setShowRemoveSongDialog] = useState(false)
+  const [songToRemove, setSongToRemove] = useState(null)
   const [playOptions, setPlayOptions] = useState({
     shuffle: false,
     loop: false,
@@ -82,21 +84,32 @@ function PlaylistView({ playlist, onBack, onPlay }) {
     }
   }
 
-  const handleRemoveSong = async (songId) => {
-    if (playlist.id === 'favourites') {
-      try {
-        await removeFavourite(songId)
-        setSongs(prev => prev.filter(s => s.songId !== songId))
-      } catch (error) {
-        console.error('Failed to remove from favourites:', error)
+  const handleRemoveSongClick = (songId) => {
+    setSongToRemove(songId)
+    setShowRemoveSongDialog(true)
+  }
+
+  const handleRemoveSongCancel = () => {
+    setShowRemoveSongDialog(false)
+    setSongToRemove(null)
+  }
+
+  const handleRemoveSongConfirm = async () => {
+    if (!songToRemove) return
+
+    try {
+      if (playlist.id === 'favourites') {
+        await removeFavourite(songToRemove)
+        setSongs(prev => prev.filter(s => s.songId !== songToRemove))
+      } else {
+        await removeSong(playlist.id, songToRemove)
+        setSongs(prev => prev.filter(s => s.songId !== songToRemove))
       }
-    } else {
-      try {
-        await removeSong(playlist.id, songId)
-        setSongs(prev => prev.filter(s => s.songId !== songId))
-      } catch (error) {
-        console.error('Failed to remove song:', error)
-      }
+      setShowRemoveSongDialog(false)
+      setSongToRemove(null)
+    } catch (error) {
+      console.error('Failed to remove song:', error)
+      alert('Failed to remove song: ' + error.message)
     }
   }
 
@@ -144,6 +157,27 @@ function PlaylistView({ playlist, onBack, onPlay }) {
     })
   }
 
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true)
+  }
+
+  const handleDeleteCancel = () => {
+    setShowDeleteDialog(false)
+  }
+
+  const handleDeleteConfirm = async () => {
+    try {
+      await removePlaylist(playlist.id)
+      setShowDeleteDialog(false)
+      onBack() // Navigate back to playlist list
+    } catch (error) {
+      console.error('Failed to delete playlist:', error)
+      alert('Failed to delete playlist: ' + error.message)
+    }
+  }
+
+  const canDelete = playlist.id !== 'favourites'
+
   if (isLoading) {
     return (
       <div className="playlist-view">
@@ -161,6 +195,15 @@ function PlaylistView({ playlist, onBack, onPlay }) {
     <div className="playlist-view">
       <div className="playlist-header">
         <h2>{playlist.name}</h2>
+        {canDelete && (
+          <button
+            className="delete-playlist-button"
+            onClick={handleDeleteClick}
+            aria-label="Delete playlist"
+          >
+            ×
+          </button>
+        )}
       </div>
       <div className="playlist-songs">
         {songs.length === 0 ? (
@@ -172,7 +215,6 @@ function PlaylistView({ playlist, onBack, onPlay }) {
               return (
                 <li key={songId} className="song-item">
                   <div className="song-info">
-                    <SongBadge type={song.type} />
                     <div className="song-details">
                       <div className="song-name">{song.name || 'Unknown'}</div>
                       {song.artist && (
@@ -190,7 +232,7 @@ function PlaylistView({ playlist, onBack, onPlay }) {
                     </button>
                     <button
                       className="remove-button"
-                      onClick={() => handleRemoveSong(songId)}
+                      onClick={() => handleRemoveSongClick(songId)}
                       aria-label="Remove song"
                     >
                       ×
@@ -206,14 +248,57 @@ function PlaylistView({ playlist, onBack, onPlay }) {
         options={playOptions}
         onChange={setPlayOptions}
         onPlay={handlePlay}
-        onStop={() => {
-          // TODO: Implement stop functionality
-          console.log('Stop playback')
-        }}
+        onStop={() => {}}
         onBack={onBack}
         songCount={songs.length}
         isPlaying={false}
       />
+
+      {showDeleteDialog && (
+        <div className="confirm-dialog-overlay" onClick={handleDeleteCancel}>
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Playlist</h3>
+            <p>Are you sure you want to delete the playlist?</p>
+            <div className="confirm-dialog-actions">
+              <button 
+                className="confirm-button cancel"
+                onClick={handleDeleteCancel}
+              >
+                Cancel
+              </button>
+              <button 
+                className="confirm-button ok"
+                onClick={handleDeleteConfirm}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRemoveSongDialog && (
+        <div className="confirm-dialog-overlay" onClick={handleRemoveSongCancel}>
+          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Remove Song</h3>
+            <p>Are you sure you want to remove the song from the playlist?</p>
+            <div className="confirm-dialog-actions">
+              <button 
+                className="confirm-button cancel"
+                onClick={handleRemoveSongCancel}
+              >
+                Cancel
+              </button>
+              <button 
+                className="confirm-button ok"
+                onClick={handleRemoveSongConfirm}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

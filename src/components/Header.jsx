@@ -1,30 +1,29 @@
 import './Header.css'
 
-function Header({ onHomeClick, onNowPlayingClick, isPlaying }) {
+const BASE_URL = import.meta.env.BASE_URL
+
+function Header({ onHomeClick, onAboutClick }) {
   return (
     <header className="header">
-      <div className="header-logo">
-        <img src="/c64-logo.svg" alt="C64" className="c64-logo" />
-      </div>
+      <button 
+        className="header-logo-button"
+        onClick={onAboutClick}
+        aria-label="About"
+      >
+        <div className="header-logo">
+          <img src={`${BASE_URL}c64-logo.svg`} alt="C64" className="c64-logo" />
+        </div>
+      </button>
       <div className="header-title">
-        <h1>Ultimate64WebMusicPlayer</h1>
+        <h1>UC64WebMusicPlayer</h1>
       </div>
       <div className="header-actions">
-        {isPlaying && (
-          <button 
-            className="now-playing-button"
-            onClick={onNowPlayingClick}
-            aria-label="Now Playing"
-          >
-            <img src="/play-button-svgrepo-com.svg" alt="Now Playing" className="now-playing-icon" />
-          </button>
-        )}
         <button 
           className="home-button"
           onClick={onHomeClick}
           aria-label="Home"
         >
-          <img src="/home-svgrepo-com.svg" alt="Home" className="home-icon" />
+          <img src={`${BASE_URL}home-svgrepo-com.svg`} alt="Home" className="home-icon" />
         </button>
       </div>
     </header>

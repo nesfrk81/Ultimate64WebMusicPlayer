@@ -74,8 +74,9 @@ function SearchBar({ onBack }) {
             type="button" 
             className="search-back-button"
             onClick={onBack}
+            aria-label="Back"
           >
-            ← Back
+            ←
           </button>
         </div>
       </div>
