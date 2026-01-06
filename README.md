@@ -17,17 +17,42 @@ A web-based music player for the [Ultimate64](https://ultimate64.com/) that lets
 
 ## 🚀 Getting Started
 
-### ⚠️ Important: Network Requirements
+### Quick Start (GitHub Pages + Proxy Helper)
 
-Due to browser security restrictions, **the GitHub Pages demo cannot directly control your Ultimate64**. This is because:
+To use the app from GitHub Pages with your Ultimate64, you need to run a small helper on your computer:
 
-- GitHub Pages is served over HTTPS
-- Your Ultimate64 uses HTTP on your local network
-- Browsers block "mixed content" (HTTPS → HTTP requests)
+**Step 1: Download and run the proxy helper**
+```bash
+# Clone the repository
+git clone https://github.com/nesfrk81/Ultimate64WebMusicPlayer.git
+cd Ultimate64WebMusicPlayer
 
-### Recommended Setup: Run Locally
+# Install dependencies
+npm install
 
-For the best experience, run the app on your local machine:
+# Start the proxy helper (keep this running)
+npm run dev:proxy
+```
+
+**Step 2: Open the app**
+- Go to **[https://nesfrk81.github.io/Ultimate64WebMusicPlayer/](https://nesfrk81.github.io/Ultimate64WebMusicPlayer/)**
+- Or install it as a PWA on your phone (see below)
+
+**Step 3: Configure settings**
+- Open Settings (gear icon)
+- Enter your Ultimate64 IP address
+- Enter `http://localhost:3001` as the Proxy URL
+- Set your HVSC path and save
+
+That's it! The proxy helper bridges your browser to your Ultimate64.
+
+### Why is a Proxy Needed?
+
+Browsers block requests from HTTPS pages (like GitHub Pages) to HTTP devices (like Ultimate64) for security reasons. The proxy helper runs on your computer and forwards the requests safely.
+
+### Alternative: Run Everything Locally
+
+If you prefer not to use GitHub Pages:
 
 ```bash
 # Clone and install
@@ -35,23 +60,11 @@ git clone https://github.com/nesfrk81/Ultimate64WebMusicPlayer.git
 cd Ultimate64WebMusicPlayer
 npm install
 
-# Run the development server
+# Run the development server (includes proxy automatically)
 npm run dev
 ```
 
-Then open `http://localhost:5173/Ultimate64WebMusicPlayer/` in your browser.
-
-The local development server includes a proxy that handles the Ultimate64 communication properly.
-
-### Alternative: GitHub Pages (Browse Only)
-
-The GitHub Pages demo at **[https://nesfrk81.github.io/Ultimate64WebMusicPlayer/](https://nesfrk81.github.io/Ultimate64WebMusicPlayer/)** can be used to:
-
-- Browse and search the HVSC catalog
-- Create and manage playlists
-- Preview the app interface
-
-But **playback requires running locally** or self-hosting on your network.
+Open `http://localhost:5173/Ultimate64WebMusicPlayer/` - no proxy URL needed in settings.
 
 ## 📱 Screenshots
 
@@ -75,8 +88,9 @@ The player features a classic C64-inspired design with modern usability:
 
 1. Open the app and go to **Settings** (gear icon)
 2. Enter your **Ultimate64 IP Address** (e.g., `192.168.1.64`)
-3. Set the **HVSC Base Path** on your Ultimate64 (e.g., `/USB0/HVSC/`)
-4. Save settings
+3. If using GitHub Pages, enter `http://localhost:3001` as the **Proxy URL**
+4. Set the **HVSC Base Path** on your Ultimate64 (e.g., `/USB0/HVSC/`)
+5. Save settings
 
 ### Finding Your Ultimate64 IP
 

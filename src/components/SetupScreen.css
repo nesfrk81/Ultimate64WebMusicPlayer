@@ -72,6 +72,14 @@
   margin-top: 0.25rem;
 }
 
+.form-hint {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+}
+
 .toggle-label {
   display: flex;
   align-items: center;

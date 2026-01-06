@@ -1,7 +1,6 @@
 import { getSettings } from './storage'
 
 const isDevelopment = import.meta.env.DEV
-const PROXY_URL = import.meta.env.VITE_PROXY_URL
 
 const getBaseUrl = async () => {
   const settings = await getSettings()
@@ -9,14 +8,17 @@ const getBaseUrl = async () => {
     throw new Error('Ultimate64 IP address not configured')
   }
   
-  if (isDevelopment && PROXY_URL) {
-    return PROXY_URL
+  // If user has configured a proxy URL, use it (works in production)
+  if (settings.proxyUrl && settings.proxyUrl.trim() !== '') {
+    return settings.proxyUrl.trim()
   }
   
+  // In development, use Vite's built-in proxy
   if (isDevelopment) {
     return '/api/ultimate64'
   }
   
+  // Direct connection (only works on same network with HTTP)
   return `http://${settings.ip}`
 }
 

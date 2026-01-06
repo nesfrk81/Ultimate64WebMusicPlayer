@@ -7,6 +7,7 @@ function SetupScreen({ onComplete }) {
   const { settings, isLoading, updateSettings } = useSettings()
   const [formData, setFormData] = useState({
     ip: '',
+    proxyUrl: '',
     hvscPath: '',
     cgscPath: '',
     musPlayerPath: '',
@@ -28,6 +29,7 @@ function SetupScreen({ onComplete }) {
     if (!isLoading && settings) {
       const initialData = {
         ip: settings.ip || '',
+        proxyUrl: settings.proxyUrl || '',
         hvscPath: settings.hvscPath || '',
         cgscPath: settings.cgscPath || '',
         musPlayerPath: settings.musPlayerPath || '',
@@ -94,6 +96,7 @@ function SetupScreen({ onComplete }) {
     const original = originalDataRef.current
     return (
       formData.ip !== original.ip ||
+      formData.proxyUrl !== original.proxyUrl ||
       formData.hvscPath !== original.hvscPath ||
       formData.cgscPath !== original.cgscPath ||
       formData.musPlayerPath !== original.musPlayerPath ||
@@ -147,6 +150,22 @@ function SetupScreen({ onComplete }) {
               placeholder="192.168.1.234"
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="proxyUrl">Proxy URL (optional)</label>
+            <input
+              type="text"
+              id="proxyUrl"
+              name="proxyUrl"
+              value={formData.proxyUrl}
+              onChange={handleChange}
+              placeholder="http://localhost:3001"
+            />
+            <div className="form-hint">
+              Required when using the app from HTTPS (like GitHub Pages). 
+              Run the proxy helper locally first.
+            </div>
           </div>
 
           <div className="form-group">
