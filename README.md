@@ -15,9 +15,43 @@ A web-based music player for the [Ultimate64](https://ultimate64.com/) that lets
 - **PWA Support**: Install as an app on your device
 - **Multiple Themes**: C64 BASIC (classic purple) and Dark mode
 
-## 🚀 Live Demo
+## 🚀 Getting Started
 
-Access the player at: **[https://nesfrk81.github.io/Ultimate64WebMusicPlayer/](https://nesfrk81.github.io/Ultimate64WebMusicPlayer/)**
+### ⚠️ Important: Network Requirements
+
+Due to browser security restrictions, **the GitHub Pages demo cannot directly control your Ultimate64**. This is because:
+
+- GitHub Pages is served over HTTPS
+- Your Ultimate64 uses HTTP on your local network
+- Browsers block "mixed content" (HTTPS → HTTP requests)
+
+### Recommended Setup: Run Locally
+
+For the best experience, run the app on your local machine:
+
+```bash
+# Clone and install
+git clone https://github.com/nesfrk81/Ultimate64WebMusicPlayer.git
+cd Ultimate64WebMusicPlayer
+npm install
+
+# Run the development server
+npm run dev
+```
+
+Then open `http://localhost:5173/Ultimate64WebMusicPlayer/` in your browser.
+
+The local development server includes a proxy that handles the Ultimate64 communication properly.
+
+### Alternative: GitHub Pages (Browse Only)
+
+The GitHub Pages demo at **[https://nesfrk81.github.io/Ultimate64WebMusicPlayer/](https://nesfrk81.github.io/Ultimate64WebMusicPlayer/)** can be used to:
+
+- Browse and search the HVSC catalog
+- Create and manage playlists
+- Preview the app interface
+
+But **playback requires running locally** or self-hosting on your network.
 
 ## 📱 Screenshots
 
@@ -124,6 +158,23 @@ npm run build
 # Preview production build
 npm run preview
 ```
+
+### Self-Hosting on Your Network
+
+To run the app on your local network (e.g., on a Raspberry Pi or NAS):
+
+```bash
+# Build the app
+npm run build
+
+# The built files are in the 'dist' folder
+# Serve them with any static file server, for example:
+npx serve dist -l 8080
+
+# Or copy 'dist' contents to your web server
+```
+
+Access from any device on your network at `http://your-server-ip:8080/Ultimate64WebMusicPlayer/`
 
 ### Generating Song Index
 
