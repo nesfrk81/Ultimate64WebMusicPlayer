@@ -66,6 +66,15 @@ npm run dev
 
 Open `http://localhost:5173/Ultimate64WebMusicPlayer/` - no proxy URL needed in settings.
 
+**To access from mobile/tablet on your network:**
+
+```bash
+# Run with --host to expose on your network
+npm run dev -- --host
+```
+
+This will show a Network URL (e.g., `http://192.168.1.100:5173/Ultimate64WebMusicPlayer/`) that you can open on any device on your local network.
+
 ## 📱 Screenshots
 
 The player features a classic C64-inspired design with modern usability:
