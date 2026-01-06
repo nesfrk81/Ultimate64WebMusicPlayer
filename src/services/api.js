@@ -245,7 +245,7 @@ export const checkSonglengthsAvailable = async () => {
     // Try to access the loaded index (this is a bit of a hack, but works)
     // We'll fetch it again to be safe, but with better error handling
     const BASE_URL = import.meta.env.BASE_URL
-    const indexUrl = `${BASE_URL}data/hvsc-index.json`
+    const indexUrl = `${BASE_URL}data/hvsc-index.json.gz`
     
     console.log('Checking songlengths availability from:', indexUrl)
     
@@ -256,7 +256,11 @@ export const checkSonglengthsAvailable = async () => {
       return false
     }
     
-    const data = await response.json()
+    // Decompress the gzip file
+    const { decompressGzip } = await import('./search')
+    const arrayBuffer = await response.arrayBuffer()
+    const decompressed = await decompressGzip(arrayBuffer)
+    const data = JSON.parse(decompressed)
     
     // Check if at least some songs have songlength data
     const songsWithLengths = data.songs?.filter(s => s.songlengths && s.songlengths.length > 0) || []

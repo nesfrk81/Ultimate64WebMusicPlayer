@@ -5,10 +5,44 @@ const BASE_URL = import.meta.env.BASE_URL
 let hvscIndex = null
 let cgscIndex = null
 
+// Decompress gzip data
+export const decompressGzip = async (arrayBuffer) => {
+  // Use Compression Streams API if available (modern browsers)
+  if ('DecompressionStream' in window) {
+    const stream = new DecompressionStream('gzip')
+    const writer = stream.writable.getWriter()
+    writer.write(new Uint8Array(arrayBuffer))
+    writer.close()
+    
+    const chunks = []
+    const reader = stream.readable.getReader()
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      chunks.push(value)
+    }
+    
+    // Combine chunks into single Uint8Array
+    const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0)
+    const result = new Uint8Array(totalLength)
+    let offset = 0
+    for (const chunk of chunks) {
+      result.set(chunk, offset)
+      offset += chunk.length
+    }
+    
+    return new TextDecoder().decode(result)
+  } else {
+    // Fallback: use pako library if Compression Streams not available
+    // For now, throw error - we can add pako later if needed
+    throw new Error('Decompression not supported in this browser. Please use a modern browser.')
+  }
+}
+
 export const loadIndices = async () => {
   try {
-    const hvscUrl = `${BASE_URL}data/hvsc-index.json`
-    const cgscUrl = `${BASE_URL}data/cgsc-index.json`
+    const hvscUrl = `${BASE_URL}data/hvsc-index.json.gz`
+    const cgscUrl = `${BASE_URL}data/cgsc-index.json.gz`
     
     console.log('Loading indices from:', { hvscUrl, cgscUrl, BASE_URL })
     
@@ -24,7 +58,9 @@ export const loadIndices = async () => {
     ])
 
     if (hvscResponse && hvscResponse.ok) {
-      hvscIndex = await hvscResponse.json()
+      const arrayBuffer = await hvscResponse.arrayBuffer()
+      const decompressed = await decompressGzip(arrayBuffer)
+      hvscIndex = JSON.parse(decompressed)
       console.log('HVSC index loaded:', hvscIndex?.songs?.length || 0, 'songs')
       
       // Check if songlengths are available and update settings
@@ -50,7 +86,9 @@ export const loadIndices = async () => {
     }
 
     if (cgscResponse && cgscResponse.ok) {
-      cgscIndex = await cgscResponse.json()
+      const arrayBuffer = await cgscResponse.arrayBuffer()
+      const decompressed = await decompressGzip(arrayBuffer)
+      cgscIndex = JSON.parse(decompressed)
       console.log('CGSC index loaded:', cgscIndex?.songs?.length || 0, 'songs')
     } else {
       console.warn('CGSC index not loaded:', cgscResponse?.status, cgscResponse?.statusText)
