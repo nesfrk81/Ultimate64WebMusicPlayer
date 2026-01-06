@@ -70,6 +70,30 @@ The player features a classic C64-inspired design with modern usability:
 - **Loop**: Repeat the playlist when finished
 - **Use SID Songlength**: Use accurate song durations from HVSC database
 
+## 📲 Install as App (PWA)
+
+You can install this web app on your phone or tablet for a native app-like experience.
+
+### iOS (iPhone/iPad)
+
+1. Open **Safari** and navigate to the app URL
+2. Tap the **Share** button (square with arrow pointing up)
+3. Scroll down and tap **"Add to Home Screen"**
+4. Give it a name and tap **"Add"**
+
+### Android (Chrome)
+
+1. Open **Chrome** and navigate to the app URL
+2. Tap the **three-dot menu** (⋮) in the top right
+3. Tap **"Add to Home screen"** or **"Install app"**
+4. Confirm by tapping **"Add"** or **"Install"**
+
+### Benefits
+
+- **Full screen mode** - No browser UI
+- **Home screen icon** - Quick access like a native app
+- **Faster loading** - App resources are cached locally
+
 ## 🛠️ Development
 
 ### Prerequisites

@@ -33,9 +33,7 @@ function App() {
     const checkSonglengths = async () => {
       try {
         const songlengthsExist = await checkSonglengthsAvailable()
-        // Only update if the current setting is false or null, and we found songlengths
         if (songlengthsExist && settings.songlengthsAvailable !== true) {
-          console.log('Updating settings: songlengths are available')
           await updateSettings({ songlengthsAvailable: true })
         }
       } catch (err) {

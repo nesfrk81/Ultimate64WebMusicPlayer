@@ -14,9 +14,7 @@ const isGzipped = (arrayBuffer) => {
 
 // Decompress gzip data using pako, or return as-is if already decompressed
 export const decompressGzip = (arrayBuffer) => {
-  // Check if already decompressed by browser (Content-Encoding: gzip header)
   if (!isGzipped(arrayBuffer)) {
-    // Already decompressed, just decode as text
     return new TextDecoder().decode(arrayBuffer)
   }
   
@@ -34,8 +32,6 @@ export const loadIndices = async () => {
   try {
     const hvscUrl = `${BASE_URL}data/hvsc-index.json.gz`
     
-    console.log('Loading HVSC index from:', hvscUrl)
-    
     const hvscResponse = await fetch(hvscUrl).catch((err) => {
       console.error('Failed to fetch HVSC index:', err)
       return null
@@ -45,20 +41,16 @@ export const loadIndices = async () => {
       const arrayBuffer = await hvscResponse.arrayBuffer()
       const jsonText = decompressGzip(arrayBuffer)
       hvscIndex = JSON.parse(jsonText)
-      console.log('HVSC index loaded:', hvscIndex?.songs?.length || 0, 'songs')
       
       // Check if songlengths are available and update settings
       const songsWithLengths = hvscIndex?.songs?.filter(s => s.songlengths && s.songlengths.length > 0) || []
       const hasLengths = songsWithLengths.length > 0
-      console.log(`Songlengths available in index: ${hasLengths} (${songsWithLengths.length} songs with lengths)`)
       
-      // Update settings if songlengths are available
       if (hasLengths) {
         try {
           const { getSettings, saveSettings } = await import('./storage')
           const currentSettings = await getSettings()
           if (currentSettings && currentSettings.songlengthsAvailable !== true) {
-            console.log('Updating settings: songlengths are now available')
             await saveSettings({ ...currentSettings, songlengthsAvailable: true })
           }
         } catch (err) {
@@ -68,8 +60,6 @@ export const loadIndices = async () => {
     } else {
       console.warn('HVSC index not loaded:', hvscResponse?.status, hvscResponse?.statusText)
     }
-
-    // CGSC (MUS files) support disabled for now
   } catch (error) {
     console.error('Failed to load song indices:', error)
   }
@@ -78,11 +68,9 @@ export const loadIndices = async () => {
 const MAX_SEARCH_RESULTS = 1000
 
 export const searchSongs = async (query, options = {}) => {
-  // MUS file support is disabled for now
   const shouldIncludeMus = false
 
   if (!hvscIndex && !cgscIndex) {
-    console.log('Indices not loaded, loading now...')
     await loadIndices()
   }
 
@@ -92,13 +80,6 @@ export const searchSongs = async (query, options = {}) => {
   if (!searchTerm) {
     return results
   }
-
-  console.log('Searching for:', searchTerm, {
-    hvscLoaded: !!hvscIndex,
-    cgscLoaded: !!cgscIndex,
-    hvscSongs: hvscIndex?.songs?.length || 0,
-    cgscSongs: cgscIndex?.songs?.length || 0
-  })
 
   // Search HVSC (SID files)
   if (hvscIndex && hvscIndex.songs) {
