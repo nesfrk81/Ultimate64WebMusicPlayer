@@ -6,8 +6,20 @@ const BASE_URL = import.meta.env.BASE_URL
 let hvscIndex = null
 let cgscIndex = null
 
-// Decompress gzip data using pako
+// Check if data is gzip compressed (starts with gzip magic bytes 0x1f 0x8b)
+const isGzipped = (arrayBuffer) => {
+  const bytes = new Uint8Array(arrayBuffer)
+  return bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b
+}
+
+// Decompress gzip data using pako, or return as-is if already decompressed
 export const decompressGzip = (arrayBuffer) => {
+  // Check if already decompressed by browser (Content-Encoding: gzip header)
+  if (!isGzipped(arrayBuffer)) {
+    // Already decompressed, just decode as text
+    return new TextDecoder().decode(arrayBuffer)
+  }
+  
   try {
     const compressed = new Uint8Array(arrayBuffer)
     const decompressed = pako.inflate(compressed, { to: 'string' })
@@ -21,25 +33,18 @@ export const decompressGzip = (arrayBuffer) => {
 export const loadIndices = async () => {
   try {
     const hvscUrl = `${BASE_URL}data/hvsc-index.json.gz`
-    const cgscUrl = `${BASE_URL}data/cgsc-index.json.gz`
     
-    console.log('Loading indices from:', { hvscUrl, cgscUrl, BASE_URL })
+    console.log('Loading HVSC index from:', hvscUrl)
     
-    const [hvscResponse, cgscResponse] = await Promise.all([
-      fetch(hvscUrl).catch((err) => {
-        console.error('Failed to fetch HVSC index:', err)
-        return null
-      }),
-      fetch(cgscUrl).catch((err) => {
-        console.error('Failed to fetch CGSC index:', err)
-        return null
-      })
-    ])
+    const hvscResponse = await fetch(hvscUrl).catch((err) => {
+      console.error('Failed to fetch HVSC index:', err)
+      return null
+    })
 
     if (hvscResponse && hvscResponse.ok) {
       const arrayBuffer = await hvscResponse.arrayBuffer()
-      const decompressed = decompressGzip(arrayBuffer)
-      hvscIndex = JSON.parse(decompressed)
+      const jsonText = decompressGzip(arrayBuffer)
+      hvscIndex = JSON.parse(jsonText)
       console.log('HVSC index loaded:', hvscIndex?.songs?.length || 0, 'songs')
       
       // Check if songlengths are available and update settings
@@ -64,14 +69,7 @@ export const loadIndices = async () => {
       console.warn('HVSC index not loaded:', hvscResponse?.status, hvscResponse?.statusText)
     }
 
-    if (cgscResponse && cgscResponse.ok) {
-      const arrayBuffer = await cgscResponse.arrayBuffer()
-      const decompressed = decompressGzip(arrayBuffer)
-      cgscIndex = JSON.parse(decompressed)
-      console.log('CGSC index loaded:', cgscIndex?.songs?.length || 0, 'songs')
-    } else {
-      console.warn('CGSC index not loaded:', cgscResponse?.status, cgscResponse?.statusText)
-    }
+    // CGSC (MUS files) support disabled for now
   } catch (error) {
     console.error('Failed to load song indices:', error)
   }
