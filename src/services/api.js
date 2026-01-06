@@ -259,7 +259,7 @@ export const checkSonglengthsAvailable = async () => {
     // Decompress the gzip file
     const { decompressGzip } = await import('./search')
     const arrayBuffer = await response.arrayBuffer()
-    const decompressed = await decompressGzip(arrayBuffer)
+    const decompressed = decompressGzip(arrayBuffer)
     const data = JSON.parse(decompressed)
     
     // Check if at least some songs have songlength data
