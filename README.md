@@ -39,9 +39,9 @@ npm run dev:proxy
 - Or install it as a PWA on your phone (see below)
 
 **Step 3: Configure settings**
-- Open Settings (gear icon)
+- Open Settings (sliders icon)
 - Enter your Ultimate64 IP address
-- Enter `http://localhost:3001` as the Proxy URL
+- Enter `http://localhost:3001` as the Proxy URL, or the IP address of the computer running the proxy (e.g., `http://192.168.1.100:3001`) for mobile/tablet usage
 - Set your HVSC path and save
 
 That's it! The proxy helper bridges your browser to your Ultimate64.
@@ -86,9 +86,9 @@ The player features a classic C64-inspired design with modern usability:
 
 ### Configuration
 
-1. Open the app and go to **Settings** (gear icon)
+1. Open the app and go to **Settings** (sliders icon)
 2. Enter your **Ultimate64 IP Address** (e.g., `192.168.1.64`)
-3. If using GitHub Pages, enter `http://localhost:3001` as the **Proxy URL**
+3. If using GitHub Pages, enter `http://localhost:3001` as the **Proxy URL** (or the IP of the computer running the proxy for mobile/tablet)
 4. Set the **HVSC Base Path** on your Ultimate64 (e.g., `/USB0/HVSC/`)
 5. Save settings
 
