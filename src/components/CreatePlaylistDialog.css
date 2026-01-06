@@ -1,0 +1,83 @@
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.dialog {
+  background-color: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  padding: 2rem;
+  min-width: 300px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.dialog h3 {
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  font-size: 1.3rem;
+}
+
+.dialog-input {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.dialog-input:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.dialog-button {
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--border-color);
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.dialog-button.cancel {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.dialog-button.cancel:hover {
+  background-color: var(--accent-color);
+  opacity: 0.8;
+}
+
+.dialog-button.create {
+  background-color: var(--accent-color);
+  color: var(--text-primary);
+}
+
+.dialog-button.create:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.dialog-button.create:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

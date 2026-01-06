@@ -1,0 +1,19 @@
+.song-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.badge-sid {
+  background-color: #84C5CC;
+  color: #483AAA;
+}
+
+.badge-mus {
+  background-color: #867ADE;
+  color: #FFFFFF;
+}

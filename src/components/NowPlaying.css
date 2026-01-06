@@ -1,0 +1,155 @@
+.now-playing {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.player-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.player-header h2 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.song-counter {
+  color: var(--accent-color);
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.player-content {
+  flex: 1;
+  padding: 2rem;
+  color: var(--text-primary);
+  overflow-y: auto;
+}
+
+.current-song {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.song-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.song-title h3 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.song-artist {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.time-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.time-remaining {
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.duration-source {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.time-controls {
+  display: flex;
+  gap: 1rem;
+}
+
+.time-button {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.time-button:hover {
+  background-color: var(--accent-color);
+  opacity: 0.8;
+}
+
+.player-actions {
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  gap: 1rem;
+}
+
+.player-actions .stop-button {
+  flex: 1;
+  padding: 1rem;
+  background-color: #d32f2f;
+  border: 1px solid var(--border-color);
+  color: white;
+  font-size: 1.1rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.player-actions .stop-button:hover {
+  opacity: 0.8;
+}
+
+.player-actions .next-button {
+  flex: 2;
+  padding: 1rem;
+  background-color: var(--accent-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.player-actions .next-button:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.player-actions .next-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.player-actions .back-button {
+  flex: 1;
+  padding: 1rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.player-actions .back-button:hover {
+  background-color: var(--accent-color);
+  opacity: 0.8;
+}
