@@ -3,7 +3,7 @@ import { getSongTime, setSongTime, removeSongTime } from '../services/storage'
 import './NowPlaying.css'
 
 function NowPlaying({ player, onBack }) {
-  const { isPlaying, currentSong, remainingTime, playOptions, currentIndex, totalSongs, stop, skip } = player
+  const { isPlaying, currentSong, remainingTime, playOptions, currentIndex, totalSongs, stop, skip, previous } = player
   const [customTime, setCustomTime] = useState(null)
   const [hasCustomTime, setHasCustomTime] = useState(false)
 
@@ -141,11 +141,20 @@ function NowPlaying({ player, onBack }) {
           ■
         </button>
         <button
+          className="prev-button"
+          onClick={previous}
+          disabled={!isPlaying}
+          aria-label="Previous"
+        >
+          ◀
+        </button>
+        <button
           className="next-button"
           onClick={skip}
           disabled={!isPlaying}
+          aria-label="Next"
         >
-          Next Song →
+          ▶
         </button>
         <button
           className="back-button"

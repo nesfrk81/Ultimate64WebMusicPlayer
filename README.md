@@ -9,7 +9,7 @@ A web-based music player for the [Ultimate64](https://ultimate64.com/) that lets
 - **Browse & Search**: Search through 50,000+ SID files from HVSC
 - **Playlist Management**: Create custom playlists and organize your favorite tunes
 - **Favourites**: Quick access to your most-loved tracks
-- **Playback Controls**: Play, stop, skip, shuffle, and loop
+- **Playback Controls**: Play, stop, previous, next, shuffle, and loop
 - **Songlength Support**: Automatic song duration from HVSC Songlengths.md5
 - **Mobile-First Design**: Optimized for use on phones and tablets
 - **PWA Support**: Install as an app on your device
@@ -32,7 +32,7 @@ The player features a classic C64-inspired design with modern usability:
 
 ### Requirements
 
-- An Ultimate64 or Ultimate-II+ with network connectivity
+- A Commodore 64 Ultimate, Ultimate64 or Ultimate-II+ with network connectivity
 - HVSC collection on your Ultimate64's storage (USB/SD)
 - A modern web browser (Chrome, Firefox, Safari, Edge)
 - Both devices must be on the same local network

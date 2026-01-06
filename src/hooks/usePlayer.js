@@ -200,6 +200,74 @@ export function usePlayer() {
     await handleNext()
   }
 
+  const previous = async () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+    }
+    await handlePrevious()
+  }
+
+  const handlePrevious = async () => {
+    console.log('=== handlePrevious called ===')
+    
+    // Check if stopped
+    if (stoppedRef.current) {
+      console.log('handlePrevious: stopped flag is set, aborting')
+      return
+    }
+    
+    const playlist = currentPlaylistRef.current
+    const options = playOptionsRef.current
+    const currentIndex = playIndexRef.current
+    
+    if (!playlist || !options) {
+      console.log('handlePrevious: no playlist or options, aborting')
+      return
+    }
+
+    const songs = playlist.songs || []
+    if (songs.length === 0) {
+      return
+    }
+
+    let prevIndex = currentIndex
+
+    if (options.shuffle) {
+      // Shuffle: go back in shuffled order
+      const shuffledOrder = shuffledOrderRef.current
+      
+      if (shuffledOrder) {
+        const currentShuffledIndex = shuffledOrder.indexOf(currentIndex)
+        
+        if (currentShuffledIndex > 0) {
+          // Go back one in shuffled order
+          prevIndex = shuffledOrder[currentShuffledIndex - 1]
+        } else if (options.loop) {
+          // At start, loop to end of shuffled order
+          prevIndex = shuffledOrder[shuffledOrder.length - 1]
+        }
+        // If not looping and at start, stay on current song
+      }
+    } else {
+      // Normal: go to previous song
+      if (currentIndex > 0) {
+        prevIndex = currentIndex - 1
+      } else if (options.loop) {
+        // Loop to end
+        prevIndex = songs.length - 1
+      }
+      // If not looping and at start, stay on current song
+    }
+
+    console.log('handlePrevious: playing previous song at index', prevIndex)
+    setPlayIndex(prevIndex)
+    playIndexRef.current = prevIndex
+    await playSong(songs[prevIndex], playlist, options)
+  }
+
   const handleNext = async () => {
     console.log('=== handleNext called ===')
     
@@ -349,6 +417,7 @@ export function usePlayer() {
     play: startPlaylist,
     stop,
     skip,
+    previous,
     pause: stop // For now, pause is same as stop
   }
 }
